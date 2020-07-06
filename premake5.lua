@@ -1,6 +1,6 @@
 workspace "OpenGL"
 	architecture "x64"
-	startproject "shading"
+	startproject "normal_mapping"
 
 	configurations
 	{

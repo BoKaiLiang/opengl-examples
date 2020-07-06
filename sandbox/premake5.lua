@@ -23,6 +23,7 @@ project "shading"
 		"../ext/imgui",
 		"../ext/stb",
 		"../ext/tinyobjloader",
+		"../ext/assimp/include",
 		"../core"
 	}
 

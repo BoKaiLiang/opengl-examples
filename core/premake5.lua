@@ -23,6 +23,7 @@ project "core"
 		"../ext/imgui",
 		"../ext/stb",
 		"../ext/tinyobjloader",
+		"../ext/assimp/include"
 	}
 
 	links
@@ -43,6 +44,11 @@ project "core"
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "on"
+
+		links
+		{
+			"../ext/assimp/lib/Debug/assimp-vc142-mtd.lib"
+		}
 
 	filter "configurations:Release"
 		runtime "Release"

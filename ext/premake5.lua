@@ -64,8 +64,9 @@ project "external"
     {
 		-- For glad.c directory
         "glad/include",
-		"spdlog/include"
-    }
+		"spdlog/include",
+		"assimp/include"
+	}
 
 	defines
 	{
@@ -97,6 +98,11 @@ project "external"
 	filter "configurations:Debug"
         runtime "Debug"
         symbols "on"
+
+		links
+		{
+			"assimp/lib/Debug/assimp-vc142-mtd.lib"
+		}
 
     filter "configurations:Release"
         runtime "Release"

@@ -1,3 +1,4 @@
+#if 0
 #include "Core.h"
 
 #include <filesystem>
@@ -13,176 +14,877 @@ class ExampleApplication : public Application
 public:
 	ExampleApplication(unsigned int width, unsigned int height, const std::string& title)
 		: Application(width, height, title),
-        m_Light(glm::vec3(1.2f, 1.0f, 2.0f)),
-        m_Camera(glm::vec3(0.0f, 0.0f, 3.0f))
+		m_Light(glm::vec3(1.2f, 1.0f, 2.0f)),
+		m_Camera(glm::vec3(0.0f, 0.0f, 3.0f))
 	{
-        // load sphere model
-        LoadObjFile("../assets/models/Ball/3d-model.obj", Vertices);
+		// load sphere model
+		LoadObjFile("../assets/models/Ball/3d-model.obj", Vertices);
 
-        glGenBuffers(1, &m_SphereVBO);
-        glGenVertexArrays(1, &m_SphereVAO);
+		glGenBuffers(1, &m_SphereVBO);
+		glGenVertexArrays(1, &m_SphereVAO);
 
-        glBindBuffer(GL_ARRAY_BUFFER, m_SphereVBO);
-        glBufferData(GL_ARRAY_BUFFER, Vertices.size() * sizeof(Vertices), &Vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, m_SphereVBO);
+		glBufferData(GL_ARRAY_BUFFER, Vertices.size() * sizeof(Vertices), &Vertices[0], GL_STATIC_DRAW);
 
-        glBindVertexArray(m_SphereVAO);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(offsetof(Vertex, Position)));
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(offsetof(Vertex, Normal)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(offsetof(Vertex, TexCoord)));
-        glEnableVertexAttribArray(2);
-        glBindVertexArray(0);
+		glBindVertexArray(m_SphereVAO);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(offsetof(Vertex, Position)));
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(offsetof(Vertex, Normal)));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(offsetof(Vertex, TexCoord)));
+		glEnableVertexAttribArray(2);
+		glBindVertexArray(0);
 
-        m_PhongShader = Shader::Create("../assets/shaders/phong_vert.glsl", "../assets/shaders/phong_frag.glsl");
+		m_PhongShader = Shader::Create("../assets/shaders/phong_vert.glsl", "../assets/shaders/phong_frag.glsl");
 
-        m_BlinnPhong = Shader::Create("../assets/shaders/blinn-phong_vert.glsl", "../assets/shaders/blinn-phong_frag.glsl");
+		m_BlinnPhong = Shader::Create("../assets/shaders/blinn-phong_vert.glsl", "../assets/shaders/blinn-phong_frag.glsl");
 
-        m_Gouraud = Shader::Create("../assets/shaders/gouraud_vert.glsl", "../assets/shaders/gouraud_frag.glsl");
+		m_Gouraud = Shader::Create("../assets/shaders/gouraud_vert.glsl", "../assets/shaders/gouraud_frag.glsl");
 
-        m_Toon = Shader::Create("../assets/shaders/toon_vert.glsl", "../assets/shaders/toon_frag.glsl");
+		m_Toon = Shader::Create("../assets/shaders/toon_vert.glsl", "../assets/shaders/toon_frag.glsl");
 	}
 
 	~ExampleApplication()
 	{
-        glDeleteBuffers(1, &m_SphereVBO);
-        glDeleteVertexArrays(1, &m_SphereVAO);
+		glDeleteBuffers(1, &m_SphereVBO);
+		glDeleteVertexArrays(1, &m_SphereVAO);
 
-        delete m_PhongShader;
-        delete m_BlinnPhong;
-        delete m_Gouraud;
-        delete m_Toon;
+		delete m_PhongShader;
+		delete m_BlinnPhong;
+		delete m_Gouraud;
+		delete m_Toon;
 	}
 
 	virtual void OnEvent(Event& e) override
 	{
-        
+
 	}
 
 	virtual void OnUpdate(float dt) override
 	{
-        // Blinn-phong
-        // ---------------------------------
-        m_BlinnPhong->SetUniformVec3("light.position", m_Light.Position);
-        m_BlinnPhong->SetUniformVec3("viewPos", m_Camera.Position);
+		// Blinn-phong
+		// ---------------------------------
+		m_BlinnPhong->SetUniformVec3("light.position", m_Light.Position);
+		m_BlinnPhong->SetUniformVec3("viewPos", m_Camera.Position);
 
-        // light properties
-        m_BlinnPhong->SetUniformVec3("light.ambient", m_Light.LightColor);
-        m_BlinnPhong->SetUniformVec3("light.diffuse", m_Light.LightColor);
-        m_BlinnPhong->SetUniformVec3("light.specular", m_Light.LightColor);
+		// light properties
+		m_BlinnPhong->SetUniformVec3("light.ambient", m_Light.LightColor);
+		m_BlinnPhong->SetUniformVec3("light.diffuse", m_Light.LightColor);
+		m_BlinnPhong->SetUniformVec3("light.specular", m_Light.LightColor);
 
-        // material properties
-        glm::vec3 Ambient = DiffuseColor * 0.8f;
-        m_BlinnPhong->SetUniformVec3("material.ambient", Ambient);
-        m_BlinnPhong->SetUniformVec3("material.diffuse", DiffuseColor);
-        m_BlinnPhong->SetUniformVec3("material.specular", SpecularColor); // specular lighting doesn't have full effect on this object's material
-        m_BlinnPhong->SetUniformFloat("material.shininess", shininess);
+		// material properties
+		glm::vec3 Ambient = DiffuseColor * 0.8f;
+		m_BlinnPhong->SetUniformVec3("material.ambient", Ambient);
+		m_BlinnPhong->SetUniformVec3("material.diffuse", DiffuseColor);
+		m_BlinnPhong->SetUniformVec3("material.specular", SpecularColor); // specular lighting doesn't have full effect on this object's material
+		m_BlinnPhong->SetUniformFloat("material.shininess", shininess);
 
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(m_Camera.Zoom), m_Data.Width / (float)m_Data.Height, 0.1f, 100.0f);
-        glm::mat4 view = m_Camera.GetViewMatrix();
-        m_BlinnPhong->SetUniformMat4("projection", projection);
-        m_BlinnPhong->SetUniformMat4("view", view);
+		// view/projection transformations
+		glm::mat4 projection = glm::perspective(glm::radians(m_Camera.Zoom), m_Data.Width / (float)m_Data.Height, 0.1f, 100.0f);
+		glm::mat4 view = m_Camera.GetViewMatrix();
+		m_BlinnPhong->SetUniformMat4("projection", projection);
+		m_BlinnPhong->SetUniformMat4("view", view);
 
-        // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.008f, 0.008f, 0.008f));
-        m_BlinnPhong->SetUniformMat4("model", model);
+		// world transformation
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(0.008f, 0.008f, 0.008f));
+		m_BlinnPhong->SetUniformMat4("model", model);
 
-        // Gouraud
-        // ---------------------------------
-        m_Gouraud->SetUniformVec3("light.position", m_Light.Position);
-        m_Gouraud->SetUniformVec3("viewPos", m_Camera.Position);
+		// Gouraud
+		// ---------------------------------
+		m_Gouraud->SetUniformVec3("light.position", m_Light.Position);
+		m_Gouraud->SetUniformVec3("viewPos", m_Camera.Position);
 
-        // light properties
-        m_Gouraud->SetUniformVec3("light.color", m_Light.LightColor);
-        m_Gouraud->SetUniformVec3("light.ambient", m_Light.Ambient);
+		// light properties
+		m_Gouraud->SetUniformVec3("light.color", m_Light.LightColor);
+		m_Gouraud->SetUniformVec3("light.ambient", m_Light.Ambient);
 
-        // material properties
-        m_Gouraud->SetUniformVec3("material.diffuse", Ambient);
-        m_Gouraud->SetUniformVec3("material.diffuse", DiffuseColor);
-        m_Gouraud->SetUniformVec3("material.specular", SpecularColor); // specular lighting doesn't have full effect on this object's material
-        m_Gouraud->SetUniformFloat("material.shininess", shininess);
+		// material properties
+		m_Gouraud->SetUniformVec3("material.diffuse", Ambient);
+		m_Gouraud->SetUniformVec3("material.diffuse", DiffuseColor);
+		m_Gouraud->SetUniformVec3("material.specular", SpecularColor); // specular lighting doesn't have full effect on this object's material
+		m_Gouraud->SetUniformFloat("material.shininess", shininess);
 
-        // view/projection transformations
-        m_Gouraud->SetUniformMat4("projection", projection);
-        m_Gouraud->SetUniformMat4("view", view);
+		// view/projection transformations
+		m_Gouraud->SetUniformMat4("projection", projection);
+		m_Gouraud->SetUniformMat4("view", view);
 
-        // world transformation
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.008f, 0.008f, 0.008f));
-        model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f));
-        m_Gouraud->SetUniformMat4("model", model);
+		// world transformation
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(0.008f, 0.008f, 0.008f));
+		model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f));
+		m_Gouraud->SetUniformMat4("model", model);
 
-        // Toon
-        // ---------------------------------
-        m_Toon->SetUniformVec3("lightPos", m_Light.Position);
-        m_Toon->SetUniformVec3("lightColor", m_Light.LightColor);
-        m_Toon->SetUniformVec3("objectColor", DiffuseColor);
-        m_Toon->SetUniformVec3("specColor", SpecularColor);
-        m_Toon->SetUniformVec3("viewPos", m_Camera.Position);
-        m_Toon->SetUniformFloat("shininess", shininess);
+		// Toon
+		// ---------------------------------
+		m_Toon->SetUniformVec3("lightPos", m_Light.Position);
+		m_Toon->SetUniformVec3("lightColor", m_Light.LightColor);
+		m_Toon->SetUniformVec3("objectColor", DiffuseColor);
+		m_Toon->SetUniformVec3("specColor", SpecularColor);
+		m_Toon->SetUniformVec3("viewPos", m_Camera.Position);
+		m_Toon->SetUniformFloat("shininess", shininess);
 
 
-        // view/projection transformations
-        m_Toon->SetUniformMat4("projection", projection);
-        m_Toon->SetUniformMat4("view", view);
+		// view/projection transformations
+		m_Toon->SetUniformMat4("projection", projection);
+		m_Toon->SetUniformMat4("view", view);
 
-        // world transformation
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.008f, 0.008f, 0.008f));
-        model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f));
-        m_Toon->SetUniformMat4("model", model);
+		// world transformation
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(0.008f, 0.008f, 0.008f));
+		model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f));
+		m_Toon->SetUniformMat4("model", model);
 	}
 
 	virtual void OnRender() override
 	{
-        // render the cube
-        // glUseProgram(m_BlinnPhong->GetID());
-        // glUseProgram(m_Gouraud->GetID());
-        glUseProgram(m_Toon->GetID());
-        glBindVertexArray(m_SphereVAO);
-        glDrawArrays(GL_TRIANGLES, 0, Vertices.size());
+		// render the cube
+		// glUseProgram(m_BlinnPhong->GetID());
+		// glUseProgram(m_Gouraud->GetID());
+		glUseProgram(m_Toon->GetID());
+		glBindVertexArray(m_SphereVAO);
+		glDrawArrays(GL_TRIANGLES, 0, Vertices.size());
 	}
 
 	virtual void OnImGui() override
 	{
-        ImGui::Begin("Material");
-        ImGui::ColorEdit3("Diffuse Color", glm::value_ptr(DiffuseColor));
-        ImGui::ColorEdit3("Specular Color", glm::value_ptr(SpecularColor));
-        ImGui::SliderFloat("Shininess", &shininess, 8.0f, 256.0f);
-        ImGui::End();
+		ImGui::Begin("Material");
+		ImGui::ColorEdit3("Diffuse Color", glm::value_ptr(DiffuseColor));
+		ImGui::ColorEdit3("Specular Color", glm::value_ptr(SpecularColor));
+		ImGui::SliderFloat("Shininess", &shininess, 8.0f, 256.0f);
+		ImGui::End();
 
-        ImGui::Begin("Light");
-        ImGui::SliderFloat3("Position", glm::value_ptr(m_Light.Position), -10.0f, 10.0f);
-        ImGui::ColorEdit3("Color", glm::value_ptr(m_Light.LightColor));
-        ImGui::End();
+		ImGui::Begin("Light");
+		ImGui::SliderFloat3("Position", glm::value_ptr(m_Light.Position), -10.0f, 10.0f);
+		ImGui::ColorEdit3("Color", glm::value_ptr(m_Light.LightColor));
+		ImGui::End();
 	}
 
 private:
 	Shader* m_PhongShader = nullptr;
-    Shader* m_BlinnPhong = nullptr;
-    Shader* m_Gouraud = nullptr;
-    Shader* m_Toon = nullptr;
+	Shader* m_BlinnPhong = nullptr;
+	Shader* m_Gouraud = nullptr;
+	Shader* m_Toon = nullptr;
 
 	unsigned int m_SphereVAO = 0, m_SphereVBO = 0;
 
-    std::vector<Vertex> Vertices;
+	std::vector<Vertex> Vertices;
 
-    // Camera;
-    Camera m_Camera;
+	// Camera;
+	Camera m_Camera;
 
-    // Light
-    Light m_Light;
+	// Light
+	Light m_Light;
 
-    glm::vec3 DiffuseColor = glm::vec3(1.0f, 0.0f, 0.0f);
-    glm::vec3 SpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    float shininess = 32.0f;
+	glm::vec3 DiffuseColor = glm::vec3(1.0f, 0.0f, 0.0f);
+	glm::vec3 SpecularColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	float shininess = 32.0f;
+};
+#endif
+
+#if 1
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <stb_image.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "Shader.h"
+#include "Camera.h"
+// #include "Model.h"
+
+#include "mesh.h"
+#include "model.h"
+
+#include <iostream>
+#include <sstream>
+#include <filesystem>
+#include <unordered_map>
+#include <utility>
+
+// #include "LoadObj.h"
+#include "tiny_obj_loader.h"
+#include "DebugLog.h"
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow* window);
+unsigned int loadTexture(const char* path);
+void renderQuad();
+
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = (float)SCR_WIDTH / 2.0;
+float lastY = (float)SCR_HEIGHT / 2.0;
+bool firstMouse = true;
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+static bool activeNormal = false;
+
+
+/*
+struct Vertex
+{
+	// position
+	glm::vec3 Position;
+	// normal
+	glm::vec3 Normal;
+	// texCoords
+	glm::vec2 TexCoords;
+
+
+		// tangent
+		glm::vec3 Tangent;
+		// bitangent
+		glm::vec3 Bitangent;
 };
 
 
-int main(void)
+struct Mesh
 {
-	auto app = new ExampleApplication(800, 600, "Example");
-	app->Run();
+	std::string Name;
+	std::vector<Vertex> Vertices;
+	std::vector<unsigned int> Indices;
+};
+*/
+
+glm::vec3 getVertex(const tinyobj::attrib_t& _attrib, int _index) {
+	return glm::vec3(_attrib.vertices[3 * _index + 0],
+		_attrib.vertices[3 * _index + 1],
+		_attrib.vertices[3 * _index + 2]);
 }
+
+glm::vec4 getColor(const tinyobj::attrib_t& _attrib, int _index) {
+	return glm::vec4(_attrib.colors[3 * _index + 0],
+		_attrib.colors[3 * _index + 1],
+		_attrib.colors[3 * _index + 2],
+		1.0);
+}
+
+glm::vec3 getNormal(const tinyobj::attrib_t& _attrib, int _index) {
+	return glm::vec3(_attrib.normals[3 * _index + 0],
+		_attrib.normals[3 * _index + 1],
+		_attrib.normals[3 * _index + 2]);
+}
+
+glm::vec2 getTexCoords(const tinyobj::attrib_t& _attrib, int _index) {
+	return glm::vec2(_attrib.texcoords[2 * _index],
+		1.0f - _attrib.texcoords[2 * _index + 1]);
+}
+
+void addModel(/*std::vector<Model*>& _models*/std::unordered_map<std::string, Mesh>& meshes, const std::string& _name, Mesh& _mesh) {
+
+	std::cout << "    vertices = " << _mesh.getVertices().size() << std::endl;
+	std::cout << "    colors   = " << _mesh.getColors().size() << std::endl;
+	std::cout << "    normals  = " << _mesh.getNormals().size() << std::endl;
+	std::cout << "    uvs      = " << _mesh.getTexCoords().size() << std::endl;
+	std::cout << "    indices  = " << _mesh.getIndices().size() << std::endl;
+
+	if (_mesh.getDrawMode() == GL_TRIANGLES) {
+		std::cout << "    triang.  = " << _mesh.getIndices().size() / 3 << std::endl;
+	}
+	else if (_mesh.getDrawMode() == GL_LINES) {
+		std::cout << "    lines    = " << _mesh.getIndices().size() / 2 << std::endl;
+	}
+
+
+	if (!_mesh.hasNormals())
+		if (_mesh.computeNormals())
+			std::cout << "    . Compute normals" << std::endl;
+
+	if (_mesh.computeTangents())
+		std::cout << "    . Compute tangents" << std::endl;
+
+	// _models.push_back(new Model(_name, _mesh));
+	meshes[_name] = _mesh;
+}
+
+int main()
+{
+	// glfw: initialize and configure
+	// ------------------------------
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	#endif
+
+	// glfw window creation
+	// --------------------
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+	// tell GLFW to capture our mouse
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	// glad: load all OpenGL function pointers
+	// ---------------------------------------
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
+
+	DebugLog::Init();
+
+	// configure global opengl state
+	// -----------------------------
+	glEnable(GL_DEPTH_TEST);
+
+	// build and compile shaders
+	// -------------------------
+	Shader* shader = Shader::Create("../assets/shaders/normal_mapping_vs.glsl", "../assets/shaders/normal_mapping_fs.glsl");
+	Shader* base = Shader::Create("../assets/shaders/base_vert.glsl", "../assets/shaders/base_frag.glsl");
+	// Shader basic("../assets/shaders/base_vert.glsl", "../assets/shaders/base_frag.glsl");
+
+	// load textures
+	// -------------
+	unsigned int diffuseMap = loadTexture("../assets/textures/brickwall.jpg");
+	unsigned int normalMap = loadTexture("../assets/textures/brickwall_normal.jpg");
+
+	// Load model - backpack
+	// ---------------------
+	// Models models;
+	std::unordered_map<std::string, Mesh> meshes;
+
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string warn;
+	std::string err;
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+		"../assets/models/backpack/backpack.obj",
+		"../assets/models/backpack");
+
+	if (!warn.empty()) {
+		std::cout << "WARN: " << warn << std::endl;
+	}
+	if (!err.empty()) {
+		std::cerr << err << std::endl;
+	}
+
+
+	// Append `default` material
+	// materials.push_back(tinyobj::material_t());
+
+
+	printf("    Total vertices  = %d\n", (int)(attrib.vertices.size()) / 3);
+	printf("    Total colors    = %d\n", (int)(attrib.colors.size()) / 3);
+	printf("    Total normals   = %d\n", (int)(attrib.normals.size()) / 3);
+	printf("    Total texcoords = %d\n", (int)(attrib.texcoords.size()) / 2);
+	printf("    Total materials = %d\n", (int)materials.size());
+	printf("    Total shapes    = %d\n", (int)shapes.size());
+
+	std::cerr << "Shapes: " << std::endl;
+
+	for (size_t s = 0; s < shapes.size(); s++) {
+
+		std::string name = shapes[s].name;
+
+		#if 0
+		// Check for smoothing group and compute smoothing normals
+		std::map<int, glm::vec3> smoothVertexNormals;
+		if (hasSmoothingGroup(shapes[s]) > 0) {
+
+			std::cout << "    . Compute smoothingNormal" << std::endl;
+			computeSmoothingNormals(attrib, shapes[s], smoothVertexNormals);
+		}
+		#endif
+
+		Mesh mesh;
+		mesh.setDrawMode(GL_TRIANGLES);
+
+		// Material mat;
+		std::map<int, tinyobj::index_t> unique_indices;
+		std::map<int, tinyobj::index_t>::iterator iter;
+
+		int mi = -1;
+		int mCounter = 0;
+		unsigned int iCounter = 0;
+		for (size_t i = 0; i < shapes[s].mesh.indices.size(); i++) {
+			int f = (int)floor(i / 3);
+
+			tinyobj::index_t index = shapes[s].mesh.indices[i];
+			int vi = index.vertex_index;
+			int ni = index.normal_index;
+			int ti = index.texcoord_index;
+
+			#if 0
+			// Associate w material
+			if (shapes[s].mesh.material_ids.size() > 0) {
+				int material_index = shapes[s].mesh.material_ids[f];
+				if (mi != material_index) {
+
+					// If there is a switch of material start a new mesh
+					if (mi != -1 && mesh.getVertices().size() > 0) {
+
+						// std::cout << "Adding model " << name  << "_" << toString(mCounter, 3, '0') << " w new material " << mat.name << std::endl;
+
+						// Add the model to the stack 
+						addModel(_models, name + "_" + toString(mCounter, 3, '0'), mesh, mat, _verbose);
+						mCounter++;
+
+						// Restart the mesh
+						iCounter = 0;
+						mesh.clear();
+						unique_indices.clear();
+					}
+
+					// assign the current material
+					mi = material_index;
+					mat = _materials[materials[material_index].name];
+				}
+			}
+			#endif
+
+			bool reuse = false;
+			iter = unique_indices.find(vi);
+
+			// if already exist 
+			if (iter != unique_indices.end())
+				// and have the same attributes
+				if ((iter->second.normal_index == ni) &&
+					(iter->second.texcoord_index == ti))
+					reuse = true;
+
+			// Re use the vertex
+			if (reuse)
+				mesh.addIndex((unsigned int)iter->second.vertex_index);
+			// Other wise create a new one
+			else {
+				unique_indices[vi].vertex_index = (int)iCounter;
+				unique_indices[vi].normal_index = ni;
+				unique_indices[vi].texcoord_index = ti;
+
+				mesh.addVertex(getVertex(attrib, vi));
+				mesh.addColor(getColor(attrib, vi));
+
+				// If there is normals add them
+				if (attrib.normals.size() > 0)
+					mesh.addNormal(getNormal(attrib, ni));
+				/*
+				else if (smoothVertexNormals.size() > 0)
+					if (smoothVertexNormals.find(vi) != smoothVertexNormals.end())
+						mesh.addNormal(smoothVertexNormals.at(vi));
+				*/
+
+				// If there is texcoords add them
+				if (attrib.texcoords.size() > 0)
+					mesh.addTexCoord(getTexCoords(attrib, ti));
+
+				mesh.addIndex(iCounter++);
+			}
+		}
+
+		std::string meshName = name;
+		if (mCounter > 0)
+			meshName = name;
+
+		// std::cout << "Adding model " << meshName << " w material " << mat.name << std::endl;
+		addModel(meshes, meshName, mesh);
+	}
+
+	auto itr = meshes.begin();
+	Mesh rope_mesh = (*itr).second;
+
+	// std::vector<Vertex> vertices(rope_mesh.getBlocks());
+
+	// Model backpack("../assets/models/backpack/backpack.obj");
+
+	Texture backpack_diffuse = Texture::LoadTexture("../assets/models/backpack/diffuse.jpg");
+	unsigned int backpack_normal = loadTexture("../assets/models/backpack/normal.png");
+	
+	const size_t num_of_meshes = meshes.size();
+
+	unsigned int 
+		*VBO = new unsigned int[num_of_meshes], 
+		*VAO = new unsigned int[num_of_meshes], 
+		*EBO = new unsigned int[num_of_meshes];
+	glGenBuffers(num_of_meshes, VBO);
+	glGenBuffers(num_of_meshes, EBO);
+	glGenVertexArrays(num_of_meshes, VAO);
+
+	struct RenderData
+	{
+		unsigned int VBO = 0;
+		unsigned int VAO = 0;
+		unsigned int EBO = 0;
+		unsigned int IndicesCount = 0;
+	};
+
+	std::unordered_map<std::string, RenderData> render_data;
+
+	size_t index = 0;
+	for (auto mesh : meshes)
+	{
+		RenderData data{};
+
+		glBindVertexArray(VAO[index]);
+		data.VAO = VAO[index];
+
+		size_t num_of_indices = 0;
+
+		size_t pos_size = mesh.second.getVertices().size() * sizeof(glm::vec3);
+		size_t norm_size = mesh.second.getNormals().size() * sizeof(glm::vec3);
+		size_t texcoord_size = mesh.second.getTexCoords().size() * sizeof(glm::vec2);
+		size_t tangent_size = mesh.second.getTangents().size() * sizeof(glm::vec3);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO[index]);
+		data.VBO = VBO[index];
+
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			pos_size + norm_size + texcoord_size + tangent_size,
+			0,
+			GL_STATIC_DRAW
+		);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, pos_size, mesh.second.getVertices().data());
+		glBufferSubData(GL_ARRAY_BUFFER, pos_size, norm_size, mesh.second.getNormals().data());
+		glBufferSubData(GL_ARRAY_BUFFER, pos_size + norm_size, texcoord_size, mesh.second.getTexCoords().data());
+		glBufferSubData(GL_ARRAY_BUFFER, pos_size + norm_size + texcoord_size, tangent_size, mesh.second.getTangents().data());
+
+		GLint size = 0;
+		glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+		if ((pos_size + norm_size + texcoord_size + tangent_size) != size)
+		{
+			std::cout << "Incorrect data size in vertex buffer.\n";
+			// Log the error
+			return -3;
+		}
+
+		size_t indices_size = rope_mesh.getIndices().size() * sizeof(unsigned int);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[index]);
+		data.EBO = EBO[index];
+
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.second.getIndices().size() * sizeof(unsigned int), mesh.second.getIndices().data(), GL_STATIC_DRAW);
+		data.IndicesCount = mesh.second.getIndices().size();
+
+		glUseProgram(base->GetID());
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		// vertex normals
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(pos_size));
+		// vertex texture coords
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(pos_size + norm_size));
+		// vertex tangent
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)(pos_size + norm_size + texcoord_size));
+
+		glBindVertexArray(0);
+		std::string name(mesh.first);
+		index++;
+		render_data.insert({ name, data });
+	}
+
+	// shader configuration
+	// --------------------
+	glUseProgram(shader->GetID());
+	shader->SetUniformInt("diffuseMap", 0);
+	shader->SetUniformInt("normalMap", 1);
+
+	glUseProgram(base->GetID());
+	shader->SetUniformInt("diffuseMap", 0);
+
+	// lighting info
+	// -------------
+	glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+
+
+	// render loop
+	// -----------
+	while (!glfwWindowShouldClose(window))
+	{
+		// per-frame time logic
+		// --------------------
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		// input
+		// -----
+		processInput(window);
+
+		// render
+		// ------
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// configure view/projection matrices
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 model = glm::mat4(1.0f);
+		#if 1
+		glUseProgram(shader->GetID());
+		shader->SetUniformMat4("projection", projection);
+		shader->SetUniformMat4("view", view);
+		// render normal-mapped quad
+		// glm::mat4 model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		shader->SetUniformMat4("model", model);
+		shader->SetUniformVec3("viewPos", camera.Position);
+		shader->SetUniformVec3("lightPos", lightPos);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, backpack_diffuse.GetID());
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, backpack_normal);
+		if (true) {
+			for (auto data : render_data) {
+				glBindVertexArray(data.second.VAO);
+				glDrawElements(GL_TRIANGLES, data.second.IndicesCount, GL_UNSIGNED_INT, NULL);
+			}
+		}
+		// renderQuad();
+		#endif
+
+		#if 0
+		glUseProgram(base->GetID());
+		base->SetUniformMat4("projection", projection);
+		base->SetUniformMat4("view", view);
+		// render normal-mapped quad
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
+		base->SetUniformMat4("model", model);
+		base->SetUniformVec3("viewPos", camera.Position);
+		base->SetUniformVec3("lightPos", lightPos);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, backpack_diffuse.GetID());
+		if (!activeNormal) {
+			for (auto data : render_data) {
+
+				glBindVertexArray(data.second.VAO);
+				glDrawElements(GL_TRIANGLES, data.second.IndicesCount, GL_UNSIGNED_INT, NULL);
+			}
+		}
+		// renderQuad();
+		#endif
+
+		// render light source (simply re-renders a smaller plane at the light's position for debugging/visualization)
+		#if 0
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.1f));
+		shader.SetUniformMat4("model", model);
+		renderQuad();
+		#endif
+
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		// -------------------------------------------------------------------------------
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
+	return 0;
+}
+
+// renders a 1x1 quad in NDC with manually calculated tangent vectors
+// ------------------------------------------------------------------
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+	if (quadVAO == 0)
+	{
+		// positions
+		glm::vec3 pos1(-1.0f, 1.0f, 0.0f);
+		glm::vec3 pos2(-1.0f, -1.0f, 0.0f);
+		glm::vec3 pos3(1.0f, -1.0f, 0.0f);
+		glm::vec3 pos4(1.0f, 1.0f, 0.0f);
+		// texture coordinates
+		glm::vec2 uv1(0.0f, 1.0f);
+		glm::vec2 uv2(0.0f, 0.0f);
+		glm::vec2 uv3(1.0f, 0.0f);
+		glm::vec2 uv4(1.0f, 1.0f);
+		// normal vector
+		glm::vec3 nm(0.0f, 0.0f, 1.0f);
+
+		// calculate tangent/bitangent vectors of both triangles
+		glm::vec3 tangent1, bitangent1;
+		glm::vec3 tangent2, bitangent2;
+		// triangle 1
+		// ----------
+		glm::vec3 edge1 = pos2 - pos1;
+		glm::vec3 edge2 = pos3 - pos1;
+		glm::vec2 deltaUV1 = uv2 - uv1;
+		glm::vec2 deltaUV2 = uv3 - uv1;
+
+		float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+		tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+		tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+		tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+		bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+		bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+		bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+		// triangle 2
+		// ----------
+		edge1 = pos3 - pos1;
+		edge2 = pos4 - pos1;
+		deltaUV1 = uv3 - uv1;
+		deltaUV2 = uv4 - uv1;
+
+		f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+		tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+		tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+		tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+
+		bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+		bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+		bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+
+		float quadVertices[] = {
+			// positions            // normal         // texcoords  // tangent                          // bitangent
+			pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+			pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+			pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+
+			pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+			pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+			pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+		};
+		// configure plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6 * sizeof(float)));
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(8 * sizeof(float)));
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(CameraMovement::FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(CameraMovement::BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(CameraMovement::LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(CameraMovement::RIGHT, deltaTime);
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// make sure the viewport matches the new window dimensions; note that width and 
+	// height will be significantly larger than specified on retina displays.
+	glViewport(0, 0, width, height);
+}
+
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+	lastX = xpos;
+	lastY = ypos;
+
+	camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.ProcessMouseScroll(yoffset);
+}
+
+// utility function for loading a 2D texture from file
+// ---------------------------------------------------
+unsigned int loadTexture(char const* path)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat 
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
+}
+#endif
+

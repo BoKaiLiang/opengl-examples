@@ -8,6 +8,8 @@
 
 class Texture final {
 public:
+	Texture() = default;
+
 	Texture(const std::string& imgPath);
 	
 	static Texture* Create(const std::string& imgPath);
