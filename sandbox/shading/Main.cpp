@@ -193,10 +193,10 @@ private:
 
 #include "Shader.h"
 #include "Camera.h"
+#include "Texture.h"
 // #include "Model.h"
 
 #include "mesh.h"
-#include "model.h"
 
 #include <iostream>
 #include <sstream>
@@ -207,6 +207,7 @@ private:
 // #include "LoadObj.h"
 #include "tiny_obj_loader.h"
 #include "DebugLog.h"
+#include "Model.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -228,86 +229,6 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-static bool activeNormal = false;
-
-
-/*
-struct Vertex
-{
-	// position
-	glm::vec3 Position;
-	// normal
-	glm::vec3 Normal;
-	// texCoords
-	glm::vec2 TexCoords;
-
-
-		// tangent
-		glm::vec3 Tangent;
-		// bitangent
-		glm::vec3 Bitangent;
-};
-
-
-struct Mesh
-{
-	std::string Name;
-	std::vector<Vertex> Vertices;
-	std::vector<unsigned int> Indices;
-};
-*/
-
-glm::vec3 getVertex(const tinyobj::attrib_t& _attrib, int _index) {
-	return glm::vec3(_attrib.vertices[3 * _index + 0],
-		_attrib.vertices[3 * _index + 1],
-		_attrib.vertices[3 * _index + 2]);
-}
-
-glm::vec4 getColor(const tinyobj::attrib_t& _attrib, int _index) {
-	return glm::vec4(_attrib.colors[3 * _index + 0],
-		_attrib.colors[3 * _index + 1],
-		_attrib.colors[3 * _index + 2],
-		1.0);
-}
-
-glm::vec3 getNormal(const tinyobj::attrib_t& _attrib, int _index) {
-	return glm::vec3(_attrib.normals[3 * _index + 0],
-		_attrib.normals[3 * _index + 1],
-		_attrib.normals[3 * _index + 2]);
-}
-
-glm::vec2 getTexCoords(const tinyobj::attrib_t& _attrib, int _index) {
-	return glm::vec2(_attrib.texcoords[2 * _index],
-		1.0f - _attrib.texcoords[2 * _index + 1]);
-}
-
-void addModel(/*std::vector<Model*>& _models*/std::unordered_map<std::string, Mesh>& meshes, const std::string& _name, Mesh& _mesh) {
-
-	std::cout << "    vertices = " << _mesh.getVertices().size() << std::endl;
-	std::cout << "    colors   = " << _mesh.getColors().size() << std::endl;
-	std::cout << "    normals  = " << _mesh.getNormals().size() << std::endl;
-	std::cout << "    uvs      = " << _mesh.getTexCoords().size() << std::endl;
-	std::cout << "    indices  = " << _mesh.getIndices().size() << std::endl;
-
-	if (_mesh.getDrawMode() == GL_TRIANGLES) {
-		std::cout << "    triang.  = " << _mesh.getIndices().size() / 3 << std::endl;
-	}
-	else if (_mesh.getDrawMode() == GL_LINES) {
-		std::cout << "    lines    = " << _mesh.getIndices().size() / 2 << std::endl;
-	}
-
-
-	if (!_mesh.hasNormals())
-		if (_mesh.computeNormals())
-			std::cout << "    . Compute normals" << std::endl;
-
-	if (_mesh.computeTangents())
-		std::cout << "    . Compute tangents" << std::endl;
-
-	// _models.push_back(new Model(_name, _mesh));
-	meshes[_name] = _mesh;
-}
 
 int main()
 {
@@ -366,241 +287,11 @@ int main()
 
 	// Load model - backpack
 	// ---------------------
-	// Models models;
-	std::unordered_map<std::string, Mesh> meshes;
+	// Models models
+	auto backpack = Model::LoadObjFile("../assets/models/backpack/backpack.obj");
 
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-
-	std::string warn;
-	std::string err;
-	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-		"../assets/models/backpack/backpack.obj",
-		"../assets/models/backpack");
-
-	if (!warn.empty()) {
-		std::cout << "WARN: " << warn << std::endl;
-	}
-	if (!err.empty()) {
-		std::cerr << err << std::endl;
-	}
-
-
-	// Append `default` material
-	// materials.push_back(tinyobj::material_t());
-
-
-	printf("    Total vertices  = %d\n", (int)(attrib.vertices.size()) / 3);
-	printf("    Total colors    = %d\n", (int)(attrib.colors.size()) / 3);
-	printf("    Total normals   = %d\n", (int)(attrib.normals.size()) / 3);
-	printf("    Total texcoords = %d\n", (int)(attrib.texcoords.size()) / 2);
-	printf("    Total materials = %d\n", (int)materials.size());
-	printf("    Total shapes    = %d\n", (int)shapes.size());
-
-	std::cerr << "Shapes: " << std::endl;
-
-	for (size_t s = 0; s < shapes.size(); s++) {
-
-		std::string name = shapes[s].name;
-
-		#if 0
-		// Check for smoothing group and compute smoothing normals
-		std::map<int, glm::vec3> smoothVertexNormals;
-		if (hasSmoothingGroup(shapes[s]) > 0) {
-
-			std::cout << "    . Compute smoothingNormal" << std::endl;
-			computeSmoothingNormals(attrib, shapes[s], smoothVertexNormals);
-		}
-		#endif
-
-		Mesh mesh;
-		mesh.setDrawMode(GL_TRIANGLES);
-
-		// Material mat;
-		std::map<int, tinyobj::index_t> unique_indices;
-		std::map<int, tinyobj::index_t>::iterator iter;
-
-		int mi = -1;
-		int mCounter = 0;
-		unsigned int iCounter = 0;
-		for (size_t i = 0; i < shapes[s].mesh.indices.size(); i++) {
-			int f = (int)floor(i / 3);
-
-			tinyobj::index_t index = shapes[s].mesh.indices[i];
-			int vi = index.vertex_index;
-			int ni = index.normal_index;
-			int ti = index.texcoord_index;
-
-			#if 0
-			// Associate w material
-			if (shapes[s].mesh.material_ids.size() > 0) {
-				int material_index = shapes[s].mesh.material_ids[f];
-				if (mi != material_index) {
-
-					// If there is a switch of material start a new mesh
-					if (mi != -1 && mesh.getVertices().size() > 0) {
-
-						// std::cout << "Adding model " << name  << "_" << toString(mCounter, 3, '0') << " w new material " << mat.name << std::endl;
-
-						// Add the model to the stack 
-						addModel(_models, name + "_" + toString(mCounter, 3, '0'), mesh, mat, _verbose);
-						mCounter++;
-
-						// Restart the mesh
-						iCounter = 0;
-						mesh.clear();
-						unique_indices.clear();
-					}
-
-					// assign the current material
-					mi = material_index;
-					mat = _materials[materials[material_index].name];
-				}
-			}
-			#endif
-
-			bool reuse = false;
-			iter = unique_indices.find(vi);
-
-			// if already exist 
-			if (iter != unique_indices.end())
-				// and have the same attributes
-				if ((iter->second.normal_index == ni) &&
-					(iter->second.texcoord_index == ti))
-					reuse = true;
-
-			// Re use the vertex
-			if (reuse)
-				mesh.addIndex((unsigned int)iter->second.vertex_index);
-			// Other wise create a new one
-			else {
-				unique_indices[vi].vertex_index = (int)iCounter;
-				unique_indices[vi].normal_index = ni;
-				unique_indices[vi].texcoord_index = ti;
-
-				mesh.addVertex(getVertex(attrib, vi));
-				mesh.addColor(getColor(attrib, vi));
-
-				// If there is normals add them
-				if (attrib.normals.size() > 0)
-					mesh.addNormal(getNormal(attrib, ni));
-				/*
-				else if (smoothVertexNormals.size() > 0)
-					if (smoothVertexNormals.find(vi) != smoothVertexNormals.end())
-						mesh.addNormal(smoothVertexNormals.at(vi));
-				*/
-
-				// If there is texcoords add them
-				if (attrib.texcoords.size() > 0)
-					mesh.addTexCoord(getTexCoords(attrib, ti));
-
-				mesh.addIndex(iCounter++);
-			}
-		}
-
-		std::string meshName = name;
-		if (mCounter > 0)
-			meshName = name;
-
-		// std::cout << "Adding model " << meshName << " w material " << mat.name << std::endl;
-		addModel(meshes, meshName, mesh);
-	}
-
-	auto itr = meshes.begin();
-	Mesh rope_mesh = (*itr).second;
-
-	// std::vector<Vertex> vertices(rope_mesh.getBlocks());
-
-	// Model backpack("../assets/models/backpack/backpack.obj");
-
-	Texture backpack_diffuse = Texture::LoadTexture("../assets/models/backpack/diffuse.jpg");
+	unsigned int backpack_diffuse = loadTexture("../assets/models/backpack/diffuse.jpg");
 	unsigned int backpack_normal = loadTexture("../assets/models/backpack/normal.png");
-	
-	const size_t num_of_meshes = meshes.size();
-
-	unsigned int 
-		*VBO = new unsigned int[num_of_meshes], 
-		*VAO = new unsigned int[num_of_meshes], 
-		*EBO = new unsigned int[num_of_meshes];
-	glGenBuffers(num_of_meshes, VBO);
-	glGenBuffers(num_of_meshes, EBO);
-	glGenVertexArrays(num_of_meshes, VAO);
-
-	struct RenderData
-	{
-		unsigned int VBO = 0;
-		unsigned int VAO = 0;
-		unsigned int EBO = 0;
-		unsigned int IndicesCount = 0;
-	};
-
-	std::unordered_map<std::string, RenderData> render_data;
-
-	size_t index = 0;
-	for (auto mesh : meshes)
-	{
-		RenderData data{};
-
-		glBindVertexArray(VAO[index]);
-		data.VAO = VAO[index];
-
-		size_t num_of_indices = 0;
-
-		size_t pos_size = mesh.second.getVertices().size() * sizeof(glm::vec3);
-		size_t norm_size = mesh.second.getNormals().size() * sizeof(glm::vec3);
-		size_t texcoord_size = mesh.second.getTexCoords().size() * sizeof(glm::vec2);
-		size_t tangent_size = mesh.second.getTangents().size() * sizeof(glm::vec3);
-
-		glBindBuffer(GL_ARRAY_BUFFER, VBO[index]);
-		data.VBO = VBO[index];
-
-		glBufferData(
-			GL_ARRAY_BUFFER,
-			pos_size + norm_size + texcoord_size + tangent_size,
-			0,
-			GL_STATIC_DRAW
-		);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, pos_size, mesh.second.getVertices().data());
-		glBufferSubData(GL_ARRAY_BUFFER, pos_size, norm_size, mesh.second.getNormals().data());
-		glBufferSubData(GL_ARRAY_BUFFER, pos_size + norm_size, texcoord_size, mesh.second.getTexCoords().data());
-		glBufferSubData(GL_ARRAY_BUFFER, pos_size + norm_size + texcoord_size, tangent_size, mesh.second.getTangents().data());
-
-		GLint size = 0;
-		glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-		if ((pos_size + norm_size + texcoord_size + tangent_size) != size)
-		{
-			std::cout << "Incorrect data size in vertex buffer.\n";
-			// Log the error
-			return -3;
-		}
-
-		size_t indices_size = rope_mesh.getIndices().size() * sizeof(unsigned int);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[index]);
-		data.EBO = EBO[index];
-
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.second.getIndices().size() * sizeof(unsigned int), mesh.second.getIndices().data(), GL_STATIC_DRAW);
-		data.IndicesCount = mesh.second.getIndices().size();
-
-		glUseProgram(base->GetID());
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-		// vertex normals
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(pos_size));
-		// vertex texture coords
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(pos_size + norm_size));
-		// vertex tangent
-		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)(pos_size + norm_size + texcoord_size));
-
-		glBindVertexArray(0);
-		std::string name(mesh.first);
-		index++;
-		render_data.insert({ name, data });
-	}
 
 	// shader configuration
 	// --------------------
@@ -644,21 +335,15 @@ int main()
 		shader->SetUniformMat4("projection", projection);
 		shader->SetUniformMat4("view", view);
 		// render normal-mapped quad
-		// glm::mat4 model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
 		shader->SetUniformMat4("model", model);
 		shader->SetUniformVec3("viewPos", camera.Position);
 		shader->SetUniformVec3("lightPos", lightPos);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, backpack_diffuse.GetID());
+		glBindTexture(GL_TEXTURE_2D, backpack_diffuse);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, backpack_normal);
-		if (true) {
-			for (auto data : render_data) {
-				glBindVertexArray(data.second.VAO);
-				glDrawElements(GL_TRIANGLES, data.second.IndicesCount, GL_UNSIGNED_INT, NULL);
-			}
-		}
+		backpack->Render();
 		// renderQuad();
 		#endif
 
@@ -856,6 +541,7 @@ unsigned int loadTexture(char const* path)
 	glGenTextures(1, &textureID);
 
 	int width, height, nrComponents;
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
 	if (data)
 	{
@@ -887,4 +573,3 @@ unsigned int loadTexture(char const* path)
 	return textureID;
 }
 #endif
-

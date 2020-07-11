@@ -6,91 +6,50 @@
 #include <vector>
 #include <string>
 
-struct Vertex
-{
-    // position
-    glm::vec3 Position;
-    // normal
-    glm::vec3 Normal;
-    // texCoords
-    glm::vec2 TexCoords;
-    // tangent
-    glm::vec3 Tangent;
-
-    Vertex() = default;
-
-    Vertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 uv, glm::vec3 tangent)
-        : Position(pos), Normal(norm), TexCoords(uv), Tangent(tangent) { }
-};
-
-
-#if 1
 class Mesh {
 public:
 
     Mesh();
-    Mesh(const Mesh& _mother);
-    virtual ~Mesh();
+    Mesh(const Mesh& other);
+    ~Mesh();
 
-    void    setDrawMode(GLenum _drawMode = GL_TRIANGLES);
+    void AddVertex(const glm::vec3& vertex);
+    void AddNormal(const glm::vec3& normal);
+    void AddTexCoord(const glm::vec2& uv);
+    void AddTangent(const glm::vec3& tangent);
+    void AddColor(const glm::vec4& color);
+    void AddIndex(unsigned int index);
 
-    void    setColor(const glm::vec4& _color);
-    void    addColor(const glm::vec4& _color);
-    void    addColors(const std::vector<glm::vec4>& _colors);
+    // const bool    hasColors() const { return m_Colors.size() > 0; }
+    // const bool    hasNormals() const { return m_Normals.size() > 0; }
+    // const bool    hasTexCoords() const { return m_TexCoords.size() > 0; }
+    // const bool    hasTangents() const { return m_Tangents.size() > 0; }
+    // const bool    hasIndices() const { return m_Indices.size() > 0; }
 
-    void    addVertex(const glm::vec3& _point);
-    void    addVertices(const std::vector<glm::vec3>& _verts);
-    void    addVertices(const glm::vec3* _verts, int _amt);
+    // GLenum  getDrawMode() const;
+    // std::vector<glm::ivec3>  getTriangles() const;
 
-    void    addNormal(const glm::vec3& _normal);
-    void    addNormals(const std::vector<glm::vec3>& _normals);
-
-    void    addTangent(const glm::vec4& _tangent);
-    void    addTangent(const glm::vec3& _tangent);
-
-    void    addTexCoord(const glm::vec2& _uv);
-    void    addTexCoords(const std::vector<glm::vec2>& _uvs);
-
-    void    addIndex(unsigned int _i);
-    void    addIndices(const std::vector<unsigned int>& _inds);
-    void    addIndices(const unsigned int* _inds, int _amt);
-
-    void    addTriangle(unsigned int index1, unsigned int index2, unsigned int index3);
-
-    void    add(const Mesh& _mesh);
-
-    const bool    hasColors() const { return m_colors.size() > 0; }
-    const bool    hasNormals() const { return m_normals.size() > 0; }
-    const bool    hasTexCoords() const { return m_texCoords.size() > 0; }
-    const bool    hasTangents() const { return m_tangents.size() > 0; }
-    const bool    hasIndices() const { return m_indices.size() > 0; }
-    // Here is vbo
-    // Vbo* getVbo();
-    GLenum  getDrawMode() const;
-    std::vector<glm::ivec3>  getTriangles() const;
-
-    const std::vector<glm::vec4>& getColors() const;
-    const std::vector<glm::vec3>& getTangents() const;
-    const std::vector<glm::vec3>& getVertices() const;
-    const std::vector<glm::vec3>& getNormals() const;
-    const std::vector<glm::vec2>& getTexCoords() const;
-    const std::vector<unsigned int>& getIndices() const;
-    std::vector<Vertex> getBlocks();
+    inline const std::vector<glm::vec3>& GetVertices() const { return m_Vertices; }
+    inline const std::vector<glm::vec3>& GetNormals() const { return m_Normals; }
+    inline const std::vector<glm::vec2>& GetTexCoords() const { return m_TexCoords; }
+    inline const std::vector<glm::vec3>& GetTangents() const { return m_Tangents; }
+    inline const std::vector<glm::vec4>& GetColors() const { return m_Colors; }
+    inline const std::vector<unsigned int>& GetIndices() const { return m_Indices; }
 
     bool    computeNormals();
-    bool    computeTangents();
-    void    clear();
+    bool    ComputeTangents();
+    void    Setup();
+    void    Draw();
 
 private:
-    std::vector<glm::vec4>  m_colors;
-    std::vector<glm::vec3>  m_tangents;
-    std::vector<glm::vec3>  m_vertices;
-    std::vector<glm::vec3>  m_normals;
-    std::vector<glm::vec2>  m_texCoords;
-    std::vector<unsigned int>   m_indices;
+    unsigned int m_Vertex_Array_ID = 0;
+    unsigned int m_Index_Buffer_ID = 0;
+    unsigned int m_Vertex_Buffer_ID = 0;
 
-    std::vector<Vertex> m_vertex_block;
-
-    GLenum    m_drawMode;
+    std::vector<glm::vec3>  m_Vertices;
+    std::vector<glm::vec3>  m_Normals;
+    std::vector<glm::vec2>  m_TexCoords;
+    std::vector<glm::vec3>  m_Tangents;
+    std::vector<glm::vec4>  m_Colors;
+    std::vector<unsigned int>   m_Indices;
 };
-#endif

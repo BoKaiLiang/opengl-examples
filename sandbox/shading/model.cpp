@@ -1,151 +1,125 @@
-#include "model.h"
+#include "Model.h"
 
+#include <iostream>
 
-Model::Model() :
-    // m_model_vbo(nullptr), m_bbox_vbo(nullptr),
-    m_bbmin(100000.0), m_bbmax(-1000000.),
-    m_name(""), m_area(0.0f) {
+#include "tiny_obj_loader.h"
 
-    #if defined(PLATFORM_RPI) || defined(PLATFORM_RPI4) 
-    addDefine("LIGHT_SHADOWMAP", "u_lightShadowMap");
-    addDefine("LIGHT_SHADOWMAP_SIZE", "512.0");
-    #else
-    addDefine("LIGHT_SHADOWMAP", "u_lightShadowMap");
-    addDefine("LIGHT_SHADOWMAP_SIZE", "1024.0");
-    #endif
+glm::vec3 GetVertex(const tinyobj::attrib_t& attrib, int index) {
+	return glm::vec3(
+		attrib.vertices[3 * index + 0],
+		attrib.vertices[3 * index + 1],
+		attrib.vertices[3 * index + 2]);
 }
 
-Model::Model(const std::string& _name, Mesh& _mesh) :
-    // m_model_vbo(nullptr), m_bbox_vbo(nullptr),
-    m_area(0.0f) {
-    setName(_name);
-    loadGeom(_mesh);
-    // loadMaterial(_mat);
+glm::vec4 GetColor(const tinyobj::attrib_t& attrib, int index) {
+	return glm::vec4(
+		attrib.colors[3 * index + 0],
+		attrib.colors[3 * index + 1],
+		attrib.colors[3 * index + 2],
+		1.0);
 }
 
-void Model::setName(const std::string& _str) {
-    /*
-    if (!m_name.empty())
-        delDefine("MODEL_NAME_" + toUpper(toUnderscore(purifyString(m_name))));
-
-    if (!_str.empty()) {
-        m_name = toLower(toUnderscore(purifyString(_str)));
-        addDefine("MODEL_NAME_" + toUpper(m_name));
-    }
-    */
+glm::vec3 GetNormal(const tinyobj::attrib_t& attrib, int index) {
+	return glm::vec3(
+		attrib.normals[3 * index + 0],
+		attrib.normals[3 * index + 1],
+		attrib.normals[3 * index + 2]);
 }
 
-void Model::addDefine(const std::string& _define, const std::string& _value) {
-    // m_shader.addDefine(_define, _value);
+glm::vec2 GetTexCoords(const tinyobj::attrib_t& attrib, int index) {
+	return glm::vec2(
+		attrib.texcoords[2 * index],
+		1.0f - attrib.texcoords[2 * index + 1]);
 }
 
-void Model::delDefine(const std::string& _define) {
-    // m_shader.delDefine(_define);
-};
+Model* Model::LoadObjFile(const std::string& objPath)
+{
+	Model* model = new Model();
 
-void Model::printDefines() {
-    // m_shader.printDefines();
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string warn;
+	std::string err;
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, objPath.c_str());
+
+	if (!warn.empty()) {
+		std::cout << "WARN: " << warn << std::endl;
+	}
+	if (!err.empty()) {
+		std::cerr << "ERROE: " << err << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	for (size_t s = 0; s < shapes.size(); s++) {
+
+		std::string name = shapes[s].name;
+
+		Mesh mesh;
+
+		std::map<int, tinyobj::index_t> unique_indices;
+		std::map<int, tinyobj::index_t>::iterator iter;
+
+		int mi = -1;
+		int mCounter = 0;
+		unsigned int iCounter = 0;
+		for (size_t i = 0; i < shapes[s].mesh.indices.size(); i++) {
+			int f = (int)floor(i / 3);
+
+			tinyobj::index_t index = shapes[s].mesh.indices[i];
+			int vi = index.vertex_index;
+			int ni = index.normal_index;
+			int ti = index.texcoord_index;
+
+			bool reuse = false;
+			iter = unique_indices.find(vi);
+
+			// if already exist 
+			if (iter != unique_indices.end())
+				// and have the same attributes
+				if ((iter->second.normal_index == ni) &&
+					(iter->second.texcoord_index == ti))
+					reuse = true;
+
+			// Re use the vertex
+			if (reuse)
+				mesh.AddIndex((unsigned int)iter->second.vertex_index);
+			// Other wise create a new one
+			else {
+				unique_indices[vi].vertex_index = (int)iCounter;
+				unique_indices[vi].normal_index = ni;
+				unique_indices[vi].texcoord_index = ti;
+
+				mesh.AddVertex(GetVertex(attrib, vi));
+				mesh.AddColor(GetColor(attrib, vi));
+
+				// If there is normals add them
+				if (attrib.normals.size() > 0)
+					mesh.AddNormal(GetNormal(attrib, ni));
+
+				// If there is texcoords add them
+				if (attrib.texcoords.size() > 0)
+					mesh.AddTexCoord(GetTexCoords(attrib, ti));
+
+				mesh.AddIndex(iCounter++);
+			}
+		}
+
+		mesh.ComputeTangents();
+
+		mesh.Setup();
+
+		model->m_Meshes.insert({ name, mesh });
+	}
+
+	return model;
 }
 
-void Model::printVboInfo() {
-    // if (m_model_vbo)
-    //    m_model_vbo->printInfo();
-}
-
-bool Model::loadGeom(Mesh& _mesh) {
-    // Load Geometry VBO
-    // m_model_vbo = _mesh.getVbo();
-
-    // getBoundingBox(_mesh.getVertices(), m_bbmin, m_bbmax);
-    // m_area = glm::min(glm::length(m_bbmin), glm::length(m_bbmax));
-    // m_bbox_vbo = cubeCorners(m_bbmin, m_bbmax, 0.25).getVbo();
-
-    // Setup Shader and GEOMETRY DEFINE FLAGS
-    if (_mesh.hasColors())
-        addDefine("MODEL_VERTEX_COLOR", "v_color");
-
-    if (_mesh.hasNormals())
-        addDefine("MODEL_VERTEX_NORMAL", "v_normal");
-
-    if (_mesh.hasTexCoords())
-        addDefine("MODEL_VERTEX_TEXCOORD", "v_texcoord");
-
-    if (_mesh.hasTangents())
-        addDefine("MODEL_VERTEX_TANGENT", "v_tangent");
-
-    if (_mesh.getDrawMode() == GL_POINTS)
-        addDefine("MODEL_PRIMITIVE_POINTS");
-    else if (_mesh.getDrawMode() == GL_LINES)
-        addDefine("MODEL_PRIMITIVE_LINES");
-    else if (_mesh.getDrawMode() == GL_LINE_STRIP)
-        addDefine("MODEL_PRIMITIVE_LINE_STRIP");
-    else if (_mesh.getDrawMode() == GL_TRIANGLES)
-        addDefine("MODEL_PRIMITIVE_TRIANGLES");
-    else if (_mesh.getDrawMode() == GL_TRIANGLE_FAN)
-        addDefine("MODEL_PRIMITIVE_TRIANGLE_FAN");
-
-    addDefine("LIGHT_SHADOWMAP", "u_lightShadowMap");
-    addDefine("LIGHT_SHADOWMAP_SIZE", "1024.0");
-
-    return true;
-}
-
-bool Model::loadMaterial(const Material& _material) {
-    // m_shader.mergeDefines(&_material);
-    return true;
-}
-
-bool Model::loadShader(const std::string& _fragStr, const std::string& _vertStr, bool verbose) {
-    /*
-    if (m_shader.isLoaded())
-        m_shader.detach(GL_FRAGMENT_SHADER | GL_VERTEX_SHADER);
-
-    return m_shader.load(_fragStr, _vertStr, verbose);
-    */
-    return true;
-}
-
-Model::~Model() {
-    clear();
-}
-
-void Model::clear() {
-    /*
-    if (m_model_vbo) {
-        delete m_model_vbo;
-        m_model_vbo = nullptr;
-    }
-
-    if (m_bbox_vbo) {
-        delete m_bbox_vbo;
-        m_bbox_vbo = nullptr;
-    }
-    */
-}
-
-#if 0
-void Model::render(Uniforms& _uniforms, const glm::mat4& _viewProjectionMatrix) {
-    // If the model and the shader are loaded
-    if (m_model_vbo && m_shader.isLoaded()) {
-
-        // bind the shader
-        m_shader.use();
-
-        // Update Uniforms and textures variables to the shader
-        _uniforms.feedTo(m_shader);
-
-        // Pass special uniforms
-        m_shader.setUniform("u_modelViewProjectionMatrix", _viewProjectionMatrix);
-        render(&m_shader);
-    }
-}
-#endif
-
-void Model::render(Shader* _shader) {
-   // m_model_vbo->render(_shader);
-}
-
-void Model::renderBbox(Shader* _shader) {
-    // if (m_bbox_vbo)
-    //    m_model_vbo->render(_shader);
+void Model::Render()
+{
+	for (auto mesh : m_Meshes)
+	{
+		mesh.second.Draw();
+	}
 }

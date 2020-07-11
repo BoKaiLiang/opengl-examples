@@ -1,221 +1,80 @@
 #include "mesh.h"
 
+#include <glad/glad.h>
+
 #include <iostream>
 #include <vector>
 
-Mesh::Mesh() :m_drawMode(GL_TRIANGLES) {
+Mesh::Mesh() {
 
 }
 
-Mesh::Mesh(const Mesh& _mother) : m_drawMode(_mother.getDrawMode()) {
-    add(_mother);
+Mesh::Mesh(const Mesh& other)
+{
+    m_Vertex_Array_ID = other.m_Vertex_Array_ID;
+    m_Vertex_Buffer_ID = other.m_Vertex_Buffer_ID;
+    m_Index_Buffer_ID = other.m_Index_Buffer_ID;
+
+    m_Vertices.clear();
+    m_Vertices.assign(other.m_Vertices.begin(), other.m_Vertices.end());
+
+    m_Normals.clear();
+    m_Normals.assign(other.m_Normals.begin(), other.m_Normals.end());
+
+    m_TexCoords.clear();
+    m_TexCoords.assign(other.m_TexCoords.begin(), other.m_TexCoords.end());
+
+    m_Tangents.clear();
+    m_Tangents.assign(other.m_Tangents.begin(), other.m_Tangents.end());
+
+    m_Colors.clear();
+    m_Colors.assign(other.m_Colors.begin(), other.m_Colors.end());
+
+    m_Indices.clear();
+    m_Indices.assign(other.m_Indices.begin(), other.m_Indices.end());
 }
 
 Mesh::~Mesh() {
 
 }
 
-void Mesh::setDrawMode(GLenum _drawMode) {
-    m_drawMode = _drawMode;
-}
-
-void Mesh::setColor(const glm::vec4& _color) {
-    m_colors.clear();
-    for (uint32_t i = 0; i < m_vertices.size(); i++) {
-        m_colors.push_back(_color);
-    }
-}
-
-void Mesh::addColor(const glm::vec4& _color) {
-    m_colors.push_back(_color);
-}
-
-void Mesh::addColors(const std::vector<glm::vec4>& _colors) {
-    m_colors.insert(m_colors.end(), _colors.begin(), _colors.end());
-}
-
-void Mesh::addVertex(const glm::vec3& _point) {
-    m_vertices.push_back(_point);
-}
-
-void Mesh::addVertices(const std::vector<glm::vec3>& _verts) {
-    m_vertices.insert(m_vertices.end(), _verts.begin(), _verts.end());
-}
-
-void Mesh::addVertices(const glm::vec3* verts, int amt) {
-    m_vertices.insert(m_vertices.end(), verts, verts + amt);
-}
-
-void Mesh::addNormal(const glm::vec3& _normal) {
-    m_normals.push_back(_normal);
-}
-
-void Mesh::addNormals(const std::vector<glm::vec3>& _normals) {
-    m_normals.insert(m_normals.end(), _normals.begin(), _normals.end());
-}
-
-void  Mesh::addTangent(const glm::vec4& _tangent) {
-    m_tangents.push_back(_tangent);
-}
-
-void  Mesh::addTangent(const glm::vec3& _tangent) {
-    m_tangents.push_back(_tangent);
-}
-
-void Mesh::addTexCoord(const glm::vec2& _uv) {
-    m_texCoords.push_back(_uv);
-}
-
-void Mesh::addTexCoords(const std::vector<glm::vec2>& _uvs) {
-    m_texCoords.insert(m_texCoords.end(), _uvs.begin(), _uvs.end());
-}
-
-void Mesh::addIndex(unsigned int _i) {
-    m_indices.push_back(_i);
-}
-
-void Mesh::addIndices(const std::vector<unsigned int>& inds) {
-    m_indices.insert(m_indices.end(), inds.begin(), inds.end());
-}
-
-void Mesh::addIndices(const unsigned int* inds, int amt) {
-    m_indices.insert(m_indices.end(), inds, inds + amt);
-}
-
-void Mesh::addTriangle(unsigned int index1, unsigned int index2, unsigned int index3) {
-    addIndex(index1);
-    addIndex(index2);
-    addIndex(index3);
-}
-
-void Mesh::add(const Mesh& _mesh) {
-
-    if (_mesh.getDrawMode() != m_drawMode) {
-        std::cout << "INCOMPATIBLE DRAW MODES" << std::endl;
-        return;
-    }
-
-    unsigned int indexOffset = (unsigned int)getVertices().size();
-
-    addColors(_mesh.getColors());
-    addVertices(_mesh.getVertices());
-    addNormals(_mesh.getNormals());
-    addTexCoords(_mesh.getTexCoords());
-    m_tangents.insert(m_tangents.end(), _mesh.m_tangents.begin(), _mesh.m_tangents.end());
-
-    for (uint32_t i = 0; i < _mesh.getIndices().size(); i++) {
-        addIndex(indexOffset + _mesh.getIndices()[i]);
-    }
-}
-
-GLenum Mesh::getDrawMode() const {
-    return m_drawMode;
-}
-
-const std::vector<glm::vec4>& Mesh::getColors() const {
-    return m_colors;
-}
-
-const std::vector<glm::vec3>& Mesh::getTangents() const {
-    return m_tangents;
-}
-
-const std::vector<glm::vec3>& Mesh::getVertices() const {
-    return m_vertices;
-}
-
-const std::vector<glm::vec3>& Mesh::getNormals() const {
-    return m_normals;
-}
-
-const std::vector<glm::vec2>& Mesh::getTexCoords() const {
-    return m_texCoords;
-}
-
-const std::vector<unsigned int>& Mesh::getIndices() const {
-    return m_indices;
-}
-
-std::vector<Vertex> Mesh::getBlocks()
+void Mesh::AddVertex(const glm::vec3& vertex)
 {
-    m_vertex_block.clear();
-
-    size_t num_of_vertices = m_vertices.size();
-
-    for (size_t i = 0; i < num_of_vertices; i++)
-    {
-        Vertex v(
-            m_vertices.at(i), m_normals.at(i), m_texCoords.at(i), m_tangents.at(i)
-        );
-
-        m_vertex_block.push_back(v);
-    }
-
-    return m_vertex_block;
+    m_Vertices.push_back(vertex);
 }
 
-std::vector<glm::ivec3> Mesh::getTriangles() const {
-    std::vector<glm::ivec3> faces;
-
-    if (getDrawMode() == GL_TRIANGLES) {
-        if (hasIndices()) {
-            for (unsigned int j = 0; j < m_indices.size(); j += 3) {
-                glm::ivec3 tri;
-                for (int k = 0; k < 3; k++) {
-                    tri[k] = m_indices[j + k];
-                }
-                faces.push_back(tri);
-            }
-        }
-        else {
-            for (unsigned int j = 0; j < m_vertices.size(); j += 3) {
-                glm::ivec3 tri;
-                for (int k = 0; k < 3; k++) {
-                    tri[k] = j + k;
-                }
-                faces.push_back(tri);
-            }
-        }
-    }
-    else {
-        //  TODO
-        //
-        std::cout << "ERROR: getTriangles(): Mesh only add GL_TRIANGLES for NOW !!" << std::endl;
-    }
-
-    return faces;
+void Mesh::AddNormal(const glm::vec3& normal)
+{
+    m_Normals.push_back(normal);
 }
 
-void Mesh::clear() {
-    if (!m_vertices.empty()) {
-        m_vertices.clear();
-    }
-    if (hasColors()) {
-        m_colors.clear();
-    }
-    if (hasNormals()) {
-        m_normals.clear();
-    }
-    if (hasTexCoords()) {
-        m_texCoords.clear();
-    }
-    if (hasTangents()) {
-        m_tangents.clear();
-    }
-    if (hasIndices()) {
-        m_indices.clear();
-    }
+void Mesh::AddTexCoord(const glm::vec2& uv)
+{
+    m_TexCoords.push_back(uv);
+}
+
+void Mesh::AddTangent(const glm::vec3& tangent)
+{
+    m_Tangents.push_back(tangent);
+}
+
+void Mesh::AddColor(const glm::vec4& color)
+{
+    m_Colors.push_back(color);
+}
+
+void Mesh::AddIndex(unsigned int index)
+{
+    m_Indices.push_back(index);
 }
 
 bool Mesh::computeNormals() {
-    if (getDrawMode() != GL_TRIANGLES)
-        return false;
-
+    
     //The number of the vertices
-    int nV = m_vertices.size();
+    int nV = m_Vertices.size();
 
     //The number of the triangles
-    int nT = m_indices.size() / 3;
+    int nT = m_Indices.size() / 3;
 
     std::vector<glm::vec3> norm(nV); //Array for the normals
 
@@ -224,14 +83,14 @@ bool Mesh::computeNormals() {
     for (int t = 0; t < nT; t++) {
 
         //Get indices of the triangle t
-        int i1 = m_indices[3 * t];
-        int i2 = m_indices[3 * t + 1];
-        int i3 = m_indices[3 * t + 2];
+        int i1 = m_Indices[3 * t];
+        int i2 = m_Indices[3 * t + 1];
+        int i3 = m_Indices[3 * t + 2];
 
         //Get vertices of the triangle
-        const glm::vec3& v1 = m_vertices[i1];
-        const glm::vec3& v2 = m_vertices[i2];
-        const glm::vec3& v3 = m_vertices[i3];
+        const glm::vec3& v1 = m_Vertices[i1];
+        const glm::vec3& v2 = m_Vertices[i2];
+        const glm::vec3& v3 = m_Vertices[i3];
 
         //Compute the triangle's normal
         glm::vec3 dir = glm::normalize(glm::cross(v2 - v1, v3 - v1));
@@ -243,26 +102,24 @@ bool Mesh::computeNormals() {
     }
 
     //Normalize the normal's length and add it.
-    m_normals.clear();
+    m_Normals.clear();
     for (int i = 0; i < nV; i++) {
-        addNormal(glm::normalize(norm[i]));
+        AddNormal(glm::normalize(norm[i]));
     }
 
     return true;
 }
 
 // http://www.terathon.com/code/tangent.html
-bool Mesh::computeTangents() {
+bool Mesh::ComputeTangents() {
     //The number of the vertices
-    size_t nV = m_vertices.size();
+    size_t nV = m_Vertices.size();
 
-    if (m_texCoords.size() != nV ||
-        m_normals.size() != nV ||
-        getDrawMode() != GL_TRIANGLES)
+    if (m_TexCoords.size() != nV || m_Normals.size() != nV)
         return false;
 
     //The number of the triangles
-    size_t nT = m_indices.size() / 3;
+    size_t nT = m_Indices.size() / 3;
 
     std::vector<glm::vec3> tan1(nV);
     std::vector<glm::vec3> tan2(nV);
@@ -272,18 +129,18 @@ bool Mesh::computeTangents() {
     for (size_t t = 0; t < nT; t++) {
 
         //Get indices of the triangle t
-        int i1 = m_indices[3 * t];
-        int i2 = m_indices[3 * t + 1];
-        int i3 = m_indices[3 * t + 2];
+        int i1 = m_Indices[3 * t];
+        int i2 = m_Indices[3 * t + 1];
+        int i3 = m_Indices[3 * t + 2];
 
         //Get vertices of the triangle
-        const glm::vec3& v1 = m_vertices[i1];
-        const glm::vec3& v2 = m_vertices[i2];
-        const glm::vec3& v3 = m_vertices[i3];
+        const glm::vec3& v1 = m_Vertices[i1];
+        const glm::vec3& v2 = m_Vertices[i2];
+        const glm::vec3& v3 = m_Vertices[i3];
 
-        const glm::vec2& w1 = m_texCoords[i1];
-        const glm::vec2& w2 = m_texCoords[i2];
-        const glm::vec2& w3 = m_texCoords[i3];
+        const glm::vec2& w1 = m_TexCoords[i1];
+        const glm::vec2& w2 = m_TexCoords[i2];
+        const glm::vec2& w3 = m_TexCoords[i3];
 
         float x1 = v2.x - v1.x;
         float x2 = v3.x - v1.x;
@@ -315,110 +172,65 @@ bool Mesh::computeTangents() {
     }
 
     //Normalize the normal's length and add it.
-    m_tangents.clear();
+    m_Tangents.clear();
     for (size_t i = 0; i < nV; i++) {
-        const glm::vec3& n = m_normals[i];
+        const glm::vec3& n = m_Normals[i];
         const glm::vec3& t = tan1[i];
 
         // Gram-Schmidt orthogonalize
         glm::vec3 tangent = t - n * glm::dot(n, t);
 
         // Calculate handedness
-        // float hardedness = (glm::dot(glm::cross(n, t), tan2[i]) < 0.0f) ? -1.0f : 1.0f;
 
-        addTangent(tangent);
+        AddTangent(tangent);
     }
 
     return true;
 }
 
-#if 0
-Vbo* Mesh::getVbo() {
+void Mesh::Setup()
+{
+    glGenVertexArrays(1, &m_Vertex_Array_ID);
+    glBindVertexArray(m_Vertex_Array_ID);
 
-    // Create Vertex Layout
-    //
-    std::vector<VertexAttrib> attribs;
-    attribs.push_back({ "position", 3, GL_FLOAT, false, 0 });
-    int  nBits = 3;
+    unsigned int vertices_size = m_Vertices.size() * sizeof(glm::vec3);
+    unsigned int normals_size = m_Normals.size() * sizeof(glm::vec3);
+    unsigned int texcoords_size = m_TexCoords.size() * sizeof(glm::vec2);
+    unsigned int tangents_size = m_Tangents.size() * sizeof(glm::vec3);
+    unsigned int indices_size = m_Indices.size() * sizeof(unsigned int);
 
-    bool bColor = false;
-    if (hasColors() && getColors().size() == m_vertices.size()) {
-        attribs.push_back({ "color", 4, GL_FLOAT, false, 0 });
-        bColor = true;
-        nBits += 4;
-    }
+    unsigned int attributes_size = vertices_size + normals_size + texcoords_size + tangents_size;
 
-    bool bNormals = false;
-    if (hasNormals() && getNormals().size() == m_vertices.size()) {
-        attribs.push_back({ "normal", 3, GL_FLOAT, false, 0 });
-        bNormals = true;
-        nBits += 3;
-    }
+    glGenBuffers(1, &m_Vertex_Buffer_ID);
+    glBindBuffer(GL_ARRAY_BUFFER, m_Vertex_Buffer_ID);
 
-    bool bTexCoords = false;
-    if (hasTexCoords() && getTexCoords().size() == m_vertices.size()) {
-        attribs.push_back({ "texcoord", 2, GL_FLOAT, false, 0 });
-        bTexCoords = true;
-        nBits += 2;
-    }
+    glBufferData(GL_ARRAY_BUFFER, attributes_size, 0, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, m_Vertices.data());
+    glBufferSubData(GL_ARRAY_BUFFER, vertices_size, normals_size, m_Normals.data());
+    glBufferSubData(GL_ARRAY_BUFFER, vertices_size + normals_size, texcoords_size, m_TexCoords.data());
+    glBufferSubData(GL_ARRAY_BUFFER, vertices_size + normals_size + texcoords_size, tangents_size, m_Tangents.data());
 
-    bool bTangents = false;
-    if (hasTangents() && getTangents().size() == m_vertices.size()) {
-        attribs.push_back({ "tangent", 4, GL_FLOAT, false, 0 });
-        bTangents = true;
-        nBits += 4;
-    }
+    glGenBuffers(1, &m_Index_Buffer_ID);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Index_Buffer_ID);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, m_Indices.data(), GL_STATIC_DRAW);
 
-    VertexLayout* vertexLayout = new VertexLayout(attribs);
-    Vbo* tmpMesh = new Vbo(vertexLayout);
-    tmpMesh->setDrawMode(getDrawMode());
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    // vertex normals
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size));
+    // vertex texture coords
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size + normals_size));
+    // vertex tangent
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size + normals_size + texcoords_size));
 
-    std::vector<GLfloat> data;
-    for (unsigned int i = 0; i < m_vertices.size(); i++) {
-        data.push_back(m_vertices[i].x);
-        data.push_back(m_vertices[i].y);
-        data.push_back(m_vertices[i].z);
-        if (bColor) {
-            data.push_back(m_colors[i].r);
-            data.push_back(m_colors[i].g);
-            data.push_back(m_colors[i].b);
-            data.push_back(m_colors[i].a);
-        }
-        if (bNormals) {
-            data.push_back(m_normals[i].x);
-            data.push_back(m_normals[i].y);
-            data.push_back(m_normals[i].z);
-        }
-        if (bTexCoords) {
-            data.push_back(m_texCoords[i].x);
-            data.push_back(m_texCoords[i].y);
-        }
-        if (bTangents) {
-            data.push_back(m_tangents[i].x);
-            data.push_back(m_tangents[i].y);
-            data.push_back(m_tangents[i].z);
-            data.push_back(m_tangents[i].w);
-        }
-    }
-
-    tmpMesh->addVertices((GLbyte*)data.data(), m_vertices.size());
-
-    if (!hasIndices()) {
-        if (getDrawMode() == GL_LINES) {
-            for (uint32_t i = 0; i < getVertices().size(); i++) {
-                addIndex(i);
-            }
-        }
-        else if (getDrawMode() == GL_LINE_STRIP) {
-            for (uint32_t i = 1; i < getVertices().size(); i++) {
-                addIndex(i - 1);
-                addIndex(i);
-            }
-        }
-    }
-
-    tmpMesh->addIndices(m_indices.data(), m_indices.size());
-
-    return tmpMesh;
+    glBindVertexArray(0);
 }
-#endif
+
+void Mesh::Draw()
+{
+    glBindVertexArray(m_Vertex_Array_ID);
+    glDrawElements(GL_TRIANGLES, m_Indices.size(), GL_UNSIGNED_INT, NULL);
+}
